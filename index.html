@@ -531,10 +531,11 @@ body.introing{position:fixed!important;inset:0!important;width:100%!important;to
 
 /* ===== زر "أضف إلى السلة" الجديد + شارة الكمية فوق صورة المنتج ===== */
 .add-btn{display:inline-flex;align-items:center;justify-content:center;gap:.3rem;flex:0 0 auto;border:0;cursor:pointer;
-  background:var(--green);color:var(--sand);font:600 .72rem/1 "Tajawal","IBM Plex Sans Arabic",sans-serif;letter-spacing:-.005em;
+  background:var(--green);color:var(--sand);font:600 .72rem/1 "Tajawal","IBM Plex Sans Arabic",sans-serif;
   padding:.42rem .75rem;border-radius:999px;box-shadow:0 4px 10px -7px oklch(.28 .07 205/.9);white-space:nowrap;
-  transition:transform .3s var(--ease),box-shadow .3s var(--ease),filter .2s var(--ease);min-height:30px}
+  transition:transform .3s var(--ease),box-shadow .3s var(--ease),filter .2s var(--ease);min-height:30px;min-width:0;text-align:center}
 .add-btn svg{width:12px;height:12px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.add-btn .lbl{letter-spacing:0;text-align:center}
 .add-btn:hover{transform:translateY(-2px);filter:brightness(1.05)}
 .add-btn:active{transform:translateY(0) scale(.96);filter:brightness(.95)}
 .add-btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
@@ -553,14 +554,14 @@ body.introing{position:fixed!important;inset:0!important;width:100%!important;to
    بدلاً من أن يتحول إلى أيقونة صغيرة داخل دائرة ===== */
 @container (max-width:340px){
   .prow{gap:6px}
-  .add-btn{flex:1 1 100%;width:100%;padding:.55rem .8rem;font-size:.76rem;min-height:36px;gap:.35rem}
+  .add-btn{flex:1 1 100%;width:100%;min-width:0;padding:.55rem .45rem;font-size:clamp(.68rem,7.2cqi,.76rem);min-height:36px;gap:.3rem}
   .add-btn svg{width:14px;height:14px}
   .qty-badge{min-width:24px;height:20px;font-size:.62rem}
 }
 /* شبكة ثابتة العرض (متصفحات لا تدعم container queries) */
 @media (max-width:760px){
   .prow{gap:6px}
-  .add-btn{flex:1 1 100%;width:100%;padding:.55rem .8rem;font-size:.76rem;min-height:36px;gap:.35rem}
+  .add-btn{flex:1 1 100%;width:100%;min-width:0;padding:.55rem .45rem;font-size:clamp(.68rem,3vw,.74rem);min-height:36px;gap:.3rem}
   .add-btn svg{width:14px;height:14px}
   .qty-badge{min-width:24px;height:20px;font-size:.62rem}
 }
@@ -1418,7 +1419,7 @@ function showInstantly(container){
 function cardHTML(p){
   const selected=cart.some(c=>c.id===p.id);
   return `
-    <article class="card">
+    <article class="card" data-id="${p.id}">
       <div class="scene reveal">
         <div class="tilt">
           <img class="pimg" loading="lazy" width="600" height="450" src="${p.img||IMG[p.id]||''}" alt="${p.name}">
@@ -1567,6 +1568,33 @@ function animateAddToCart(source){
   }
   requestAnimationFrame(move);
 }
+/* تحديث حالة البطاقة في مكانها (بدون إعادة بناء الشبكة) — يمنع وميض/إعادة تحميل الصور على الموبايل */
+function syncCardSelection(id){
+  const selected = cart.some(c=>c.id===id);
+  const p = findItem(id);
+  document.querySelectorAll('.card[data-id="'+String(id).replace(/"/g,'\\"')+'"]').forEach(card=>{
+    const btn = card.querySelector(".add-btn");
+    if(btn){
+      btn.classList.toggle("gold", selected);
+      btn.setAttribute("aria-pressed", selected ? "true" : "false");
+      if(p){
+        btn.setAttribute("aria-label", selected ? ("إزالة "+p.name+" من الاختيارات") : ("إضافة "+p.name+" إلى الاختيارات"));
+      }
+      btn.setAttribute("title", selected ? "إزالة من الاختيارات" : "إضافة إلى الاختيارات");
+      const lbl = btn.querySelector(".lbl");
+      if(lbl) lbl.textContent = selected ? "تم الاختيار" : "أضف إلى اختياراتي";
+    }
+    const stateTag = card.querySelector(".prow .tag");
+    if(stateTag) stateTag.textContent = selected ? "تمت الإضافة إلى اختياراتك" : "اختر هذا المنتج";
+    const badge = card.querySelector(".qty-badge");
+    if(badge) badge.classList.toggle("show", selected);
+  });
+  syncCardState(id);
+}
+function syncAllCardSelections(){
+  document.querySelectorAll(".card[data-id]").forEach(card=>syncCardSelection(card.getAttribute("data-id")));
+}
+
 function addToCart(id,source){
   const p=findItem(id);
   if(!p) return;
@@ -1579,7 +1607,7 @@ function addToCart(id,source){
     animateAddToCart(source);
     toast("أُضيف إلى اختياراتك: "+p.name);
   }
-  save();updateCart();render();
+  save();updateCart();syncCardSelection(id);
 }
 function step(id,d){
   const e=cart.find(c=>c.id===id); if(!e)return;
@@ -1589,7 +1617,7 @@ function step(id,d){
 function removeItem(id){
   const e=cart.find(c=>c.id===id); if(!e)return;
   cart=cart.filter(c=>c.id!==id);
-  save();updateCart();render();toast("تم حذف المنتج من اختياراتك");
+  save();updateCart();syncCardSelection(id);toast("تم حذف المنتج من اختياراتك");
 }
 function clearCart(){
   if(!cart.length){toast("الاختيارات فارغة");return;}
@@ -1601,7 +1629,7 @@ function closeClearConfirm(){
 function confirmClearCart(){
   cart=[];coupon=null;
   const couponInput=$("#coupon"); if(couponInput) couponInput.value="";
-  save();updateCart();render();closeClearConfirm();toast("تم إفراغ الاختيارات");
+  save();updateCart();syncAllCardSelections();closeClearConfirm();toast("تم إفراغ الاختيارات");
 }
 function subtotal(){return cart.reduce((s,c)=>s+c.price*c.qty,0);}
 function discount(){
