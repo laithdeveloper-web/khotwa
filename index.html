@@ -513,7 +513,10 @@ input.search{margin-bottom:6px}
   box-shadow:0 0 14px oklch(.45 .12 205/.6);transition:width .35s var(--ease)}
 #intro .loadtxt{margin:0;font-size:var(--step--1);font-weight:600;letter-spacing:.05em;color:#fff;opacity:.92;text-shadow:0 1px 10px oklch(.28 .07 205/.4)}
 #intro .pct{font-size:.66rem;letter-spacing:.24em;color:oklch(.88 .06 84/.75)}
-body.introing{overflow:hidden}
+/* قفل كامل للتمرير أثناء الانترو (يمنع بقاء الصفحة في منتصفها على الموبايل) */
+html.introing{scroll-behavior:auto!important}
+html.introing,body.introing{overflow:hidden!important;height:100%!important;overscroll-behavior:none}
+body.introing{position:fixed!important;inset:0!important;width:100%!important;top:0!important;left:0!important}
 @media (prefers-reduced-motion:reduce){#intro *{animation:none!important}}
 
 /* ===== زر "أضف إلى السلة" الجديد + شارة الكمية فوق صورة المنتج ===== */
@@ -805,6 +808,19 @@ body.scrolled .brand img{transform:scale(.92)}
 </style>
 </head>
 <body>
+<script>
+/* منع المتصفح من استعادة موضع التمرير + تثبيت الصفحة في أعلاها قبل رسم أي شيء */
+(function(){
+  try{ if("scrollRestoration" in history) history.scrollRestoration="manual"; }catch(e){}
+  if(location.hash){ try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){} }
+  document.documentElement.classList.add("introing");
+  var top=function(){ window.scrollTo(0,0); };
+  top();
+  document.addEventListener("DOMContentLoaded",top);
+  window.addEventListener("load",top);
+  window.__scrollTop=top;
+})();
+</script>
 <div id="intro" role="status" aria-live="polite">
   <div class="ic">
     <div class="ring"><img class="logo" id="introLogo" alt="خطوة" /></div>
@@ -1743,6 +1759,8 @@ function focusSearch(){
 /* ===== شاشة الانترو: تعبئة زمنية مضمونة الحركة ===== */
 (function(){
   document.body.classList.add("introing");
+  document.documentElement.classList.add("introing");
+  if(window.__scrollTop) window.__scrollTop();
   var el=document.getElementById("intro"), fill=document.getElementById("introFill"), pct=document.getElementById("introPct");
   var brand=document.querySelector("header.site .brand img");
   var lg=document.getElementById("introLogo");
@@ -1760,8 +1778,23 @@ function focusSearch(){
   function finish(){
     if(hidden) return; hidden=true;
     set(100);
-    setTimeout(function(){ el.classList.add("hide"); document.body.classList.remove("introing");
-      setTimeout(function(){ el.remove(); },800); },450);
+    setTimeout(function(){
+      el.classList.add("hide");
+      /* فتح القفل مع ضمان أن الصفحة تبدأ من أعلاها تمامًا (بدون تمرير ناعم) */
+      var jump=function(){
+        try{ window.scrollTo({top:0,left:0,behavior:"instant"}); }catch(e){ window.scrollTo(0,0); }
+        document.documentElement.scrollTop=0; document.body.scrollTop=0;
+      };
+      jump();
+      document.body.classList.remove("introing");
+      jump();
+      requestAnimationFrame(function(){
+        document.documentElement.classList.remove("introing");
+        jump();
+      });
+      setTimeout(jump,80);
+      setTimeout(function(){ el.remove(); jump(); },800);
+    },450);
   }
   window.__introDone=function(){ loaded=true; };
   requestAnimationFrame(tick);
