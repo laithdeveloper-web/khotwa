@@ -721,6 +721,87 @@ body.scrolled .brand img{transform:scale(.92)}
 .contact-card.phone .contact-ico{background:linear-gradient(135deg,var(--green),var(--green-deep))}
 .contact-card.maps .contact-ico{background:linear-gradient(135deg,#4285F4,#34A853,#FBBC05,#EA4335)}
 
+
+/* ================== نظام تصفّح الأقسام الذكي (Smart Catalog Navigator) ==================
+   الهدف: عدد الأقسام قد يكون كبيرًا جدًا. بدل صفّ شرائح طويل ومزدحم:
+   - سطح مكتب: أهم ٦ أقسام كشرائح + زر "كل الأقسام" يفتح لوحة بحث كاملة.
+   - موبايل: زر واحد أنيق يفتح Bottom Sheet فيه بحث داخل الأقسام وعدّاد لكل قسم.
+   - وضع "الكل": عرض مجموعات مصغّرة لكل قسم (٦ منتجات) بدل قائمة لا تنتهي.
+   ===================================================================================== */
+.cat-toolbar{display:grid;gap:10px;margin-bottom:18px}
+.cat-toolbar .tb-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.cat-toolbar input.search{flex:1 1 240px;max-width:360px}
+.cat-trigger{display:inline-flex;align-items:center;gap:10px;border:1px solid var(--border);background:var(--card);color:var(--green);
+  border-radius:999px;padding:.6rem 1rem;font:inherit;font-weight:600;font-size:.85rem;cursor:pointer;box-shadow:var(--shadow-soft);
+  transition:transform .35s var(--ease),box-shadow .35s var(--ease)}
+.cat-trigger:hover{transform:translateY(-2px);box-shadow:var(--shadow-lift)}
+.cat-trigger svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;flex:0 0 auto}
+.cat-trigger .cur{max-width:14ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cat-trigger .n{background:var(--gradient-gold);color:oklch(.26 .06 205);border-radius:999px;font-size:.7rem;font-weight:700;padding:.1rem .5rem}
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin:0}
+.chip .c{opacity:.6;font-size:.7rem;margin-inline-start:4px}
+.chip.active .c{opacity:.85}
+.active-cat{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.82rem;color:var(--muted)}
+.active-cat b{color:var(--green)}
+.clear-cat{border:1px solid var(--border);background:transparent;border-radius:999px;padding:.3rem .8rem;font:inherit;font-size:.78rem;color:var(--green);cursor:pointer}
+.clear-cat:hover{background:var(--sand)}
+
+/* مجموعات الأقسام في وضع "الكل" */
+.catalog-groups{display:grid;gap:clamp(26px,4vw,44px)}
+.catgroup{scroll-margin-top:6rem}
+.cg-head{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;margin-bottom:12px;
+  padding-bottom:8px;border-bottom:1px solid var(--border)}
+.cg-title{display:flex;min-width:0;align-items:center;gap:8px}
+.cg-title h3{font-family:'Cairo',sans-serif;font-weight:700;font-size:var(--step-1);color:var(--green);margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cg-count{flex:0 0 auto;font-size:.7rem;font-weight:700;color:var(--clay);background:var(--sand);border:1px solid var(--border);border-radius:999px;padding:.15rem .55rem}
+.cg-more{flex:0 0 auto;border:0;background:transparent;color:var(--clay);font:inherit;font-size:.8rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.cg-more:hover{color:var(--green)}
+.load-more{display:grid;place-items:center;margin-top:22px}
+.load-more button{border:1px solid var(--border);background:var(--card);color:var(--green);border-radius:999px;padding:.7rem 1.6rem;font:inherit;font-weight:700;font-size:.85rem;cursor:pointer;box-shadow:var(--shadow-soft)}
+.load-more button:hover{box-shadow:var(--shadow-lift)}
+
+/* لوحة/شيت الأقسام */
+.cat-sheet{position:fixed;inset:0;z-index:90;display:grid;pointer-events:none}
+.cat-sheet .cs-back{position:absolute;inset:0;background:oklch(.28 .07 205/.45);backdrop-filter:blur(3px);opacity:0;transition:opacity .35s var(--ease)}
+.cat-sheet .cs-panel{position:relative;background:var(--bg);display:flex;flex-direction:column;min-height:0;
+  border-radius:1.25rem;box-shadow:var(--shadow-lift);width:min(680px,calc(100% - 2rem));max-height:min(80dvh,640px);
+  margin:auto;transform:translateY(14px) scale(.98);opacity:0;transition:transform .4s var(--ease),opacity .3s var(--ease)}
+.cat-sheet.open{pointer-events:auto}
+.cat-sheet.open .cs-back{opacity:1}
+.cat-sheet.open .cs-panel{transform:none;opacity:1}
+.cs-head{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;padding:16px 18px 10px}
+.cs-head h3{font-family:'Cairo',sans-serif;font-weight:700;font-size:var(--step-1);color:var(--green);margin:0}
+.cs-head p{margin:2px 0 0;font-size:.76rem;color:var(--muted)}
+.cs-close{width:38px;height:38px;border-radius:50%;border:1px solid var(--border);background:var(--card);cursor:pointer;display:grid;place-items:center;color:var(--green)}
+.cs-close svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+.cs-search{padding:0 18px 12px}
+.cs-search input{width:100%;padding:.7rem 1rem;border-radius:999px;border:1px solid var(--border);font:inherit;background:var(--card)}
+.cs-list{overflow:auto;-webkit-overflow-scrolling:touch;padding:0 18px 18px;display:grid;gap:8px;
+  grid-template-columns:repeat(auto-fill,minmax(min(100%,13rem),1fr))}
+.cs-item{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;text-align:start;
+  border:1px solid var(--border);background:var(--card);border-radius:.9rem;padding:.8rem .9rem;font:inherit;cursor:pointer;
+  transition:transform .3s var(--ease),border-color .3s,background .3s}
+.cs-item:hover{transform:translateY(-2px);border-color:var(--gold)}
+.cs-item .lbl{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;font-size:.88rem;color:var(--green)}
+.cs-item .num{flex:0 0 auto;font-size:.72rem;font-weight:700;color:var(--muted)}
+.cs-item.active{background:var(--green);border-color:var(--green)}
+.cs-item.active .lbl,.cs-item.active .num{color:var(--sand)}
+.cs-empty{grid-column:1/-1;text-align:center;color:var(--muted);font-size:.85rem;padding:18px 0}
+@media (max-width:700px){
+  .filters,#filters{display:none}
+  .cat-toolbar .tb-row{gap:8px}
+  .cat-toolbar input.search{flex:1 1 100%;max-width:100%;order:2}
+  .cat-trigger{order:1;width:100%;justify-content:space-between}
+  .cat-sheet .cs-panel{width:100%;max-width:none;margin:auto 0 0;max-height:86dvh;
+    border-radius:1.25rem 1.25rem 0 0;transform:translateY(100%);opacity:1;padding-bottom:env(safe-area-inset-bottom)}
+  .cat-sheet.open .cs-panel{transform:none}
+  .cs-list{grid-template-columns:1fr 1fr}
+  .cs-item{padding:.7rem .75rem}
+}
+@media (prefers-reduced-motion:reduce){
+  .cat-sheet .cs-panel,.cat-sheet .cs-back{transition:none}
+}
+
 </style>
 </head>
 <body>
@@ -804,11 +885,19 @@ body.scrolled .brand img{transform:scale(.92)}
        <h2>منتجات يمكن أن تبدأ بها مشروعك</h2>
        <p class="catalog-note">تصفّح المنتجات والأقسام كما هي، واختر ما يناسب فكرتك. لا توجد أسعار أو عملية شراء هنا؛ هذه المنتجات نماذج نطوّر لها البراند والتغليف الخاص بك.</p>
     </div>
-    <div style="display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:center">
+    <div class="cat-toolbar">
+      <div class="tb-row">
+        <button class="cat-trigger" type="button" id="catTrigger" aria-haspopup="dialog" aria-expanded="false" onclick="openCatSheet()">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h6"/></svg>
+          <span class="cur" id="catTriggerLabel">كل الأقسام</span>
+          <span class="n" id="catTriggerCount">0</span>
+        </button>
+        <input class="search" id="q" type="search" placeholder="ابحث في كل المنتجات…" oninput="onSearchInput()" aria-label="بحث في المنتجات" />
+      </div>
       <div class="filters" id="filters"></div>
-       <input class="search" id="q" type="search" placeholder="ابحث عن منتج…" oninput="render()" aria-label="بحث في المنتجات" />
+      <div class="active-cat" id="activeCat" hidden></div>
     </div>
-    <div class="grid" id="products"></div>
+    <div id="products"></div>
   </section>
 
   <section class="block wrap" id="services">
@@ -954,6 +1043,24 @@ body.scrolled .brand img{transform:scale(.92)}
   <div class="fbot">© <span id="yr"></span> خطوة — مشروعك يبدأ بخطوة.</div>
 </footer>
 
+<div class="cat-sheet" id="catSheet" role="dialog" aria-modal="true" aria-labelledby="catSheetTitle" aria-hidden="true">
+  <div class="cs-back" onclick="closeCatSheet()"></div>
+  <div class="cs-panel">
+    <div class="cs-head">
+      <div>
+        <h3 id="catSheetTitle">تصفّح الأقسام</h3>
+        <p id="catSheetSub">اختر القسم الذي يناسب فكرتك</p>
+      </div>
+      <button class="cs-close" type="button" aria-label="إغلاق الأقسام" onclick="closeCatSheet()">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="cs-search">
+      <input id="catSearch" type="search" placeholder="ابحث عن قسم…" aria-label="بحث في الأقسام" oninput="renderCatSheetList()" />
+    </div>
+    <div class="cs-list" id="catSheetList"></div>
+  </div>
+</div>
 <div class="overlay" id="overlay" onclick="closeCart()"></div>
 <aside class="cart" id="cart" aria-label="اختيارات المنتجات">
   <header><h2 style="font-size:1.5rem;color:var(--green)">اختياراتي</h2><div class="cart-head-actions"><button class="cart-clear" type="button" aria-label="حذف جميع المنتجات" title="حذف جميع المنتجات" onclick="event.preventDefault();clearCart()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l-1-13M10 11v5M14 11v5"/></svg><span>إفراغ</span></button><button class="icon-btn" type="button" aria-label="إغلاق الاختيارات" title="إغلاق" onclick="closeCart()"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button></div></header>
@@ -1183,10 +1290,95 @@ function init3D(){
 }
 window.init3D = init3D;
 
+/* ====== نظام تصفّح الأقسام الذكي ======
+   المشكلة: عدد الأقسام كبير جدًا فيصبح صفّ الشرائح مزدحمًا وغير لائق (خاصة على الموبايل).
+   الحل: أهم الأقسام فقط كشرائح على سطح المكتب + لوحة/شيت أقسام قابلة للبحث،
+   ووضع "الكل" يعرض مجموعات مصغّرة لكل قسم بدل قائمة عمياء طويلة. */
+const CHIP_LIMIT = 6;        /* أقصى عدد شرائح ظاهرة على سطح المكتب */
+const GROUP_PREVIEW = 8;     /* عدد المنتجات المعروضة داخل كل مجموعة في وضع "الكل" (صفّان مرتبان) */
+const PAGE_SIZE = 12;        /* حجم دفعة "عرض المزيد" داخل قسم واحد */
+let shownCount = PAGE_SIZE;
+
+function realCats(){ return CATS.filter(c=>c.k!=="all"); }
+function catLabel(k){ const c=CATS.find(x=>x.k===k); return c?c.l:k; }
+function catCount(k){ return k==="all" ? PRODUCTS.length : PRODUCTS.filter(p=>p.cat===k).length; }
+function searchQuery(){ const el=$("#q"); return ((el&&el.value)||"").trim().toLowerCase(); }
+function matchesQuery(p,q){ return !q || (p.name||"").toLowerCase().includes(q) || (p.en||"").toLowerCase().includes(q) || (p.desc||"").toLowerCase().includes(q); }
+
+/* الشرائح: الأقسام الأكثر منتجات أولًا، والقسم المختار مضمون الظهور */
 function renderFilters(){
-  $("#filters").innerHTML = CATS.map(c=>`<button class="chip ${c.k===cat?'active':''}" onclick="setCat('${c.k}')">${c.l}</button>`).join("");
+  const cats = realCats().filter(c=>catCount(c.k)>0);
+  cats.sort((a,b)=>catCount(b.k)-catCount(a.k));
+  let top = cats.slice(0, CHIP_LIMIT);
+  if(cat!=="all" && !top.some(c=>c.k===cat)){
+    const sel = cats.find(c=>c.k===cat);
+    if(sel){ top = [sel, ...top.slice(0, CHIP_LIMIT-1)]; }
+  }
+  const chips = [{k:"all", l:"الكل"}, ...top].map(c=>
+    `<button class="chip ${c.k===cat?'active':''}" type="button" onclick="setCat('${c.k}')">${c.l}<span class="c">${catCount(c.k)}</span></button>`
+  ).join("");
+  const rest = cats.length - top.length;
+  const more = rest>0 ? `<button class="chip" type="button" onclick="openCatSheet()">كل الأقسام<span class="c">+${rest}</span></button>` : "";
+  $("#filters").innerHTML = chips + more;
+
+  /* زر الأقسام (الموبايل + سطح المكتب) */
+  const lbl=$("#catTriggerLabel"), num=$("#catTriggerCount");
+  if(lbl) lbl.textContent = cat==="all" ? "كل الأقسام" : catLabel(cat);
+  if(num) num.textContent = cat==="all" ? cats.length : catCount(cat);
+
+  /* شريط القسم النشط */
+  const bar=$("#activeCat");
+  if(bar){
+    if(cat==="all"){ bar.hidden=true; bar.innerHTML=""; }
+    else{
+      bar.hidden=false;
+      bar.innerHTML = `<span>القسم الحالي: <b>${catLabel(cat)}</b> · ${catCount(cat)} منتج</span>
+        <button class="clear-cat" type="button" onclick="setCat('all')">عرض كل الأقسام</button>`;
+    }
+  }
 }
-function setCat(k){cat=k;renderFilters();render();}
+
+function setCat(k){
+  cat=k; shownCount=PAGE_SIZE;
+  renderFilters(); render(); closeCatSheet();
+  const sec=document.getElementById("shop");
+  if(sec) sec.scrollIntoView({behavior:"smooth",block:"start"});
+}
+function showMore(){ shownCount+=PAGE_SIZE; render(); }
+function onSearchInput(){ shownCount=PAGE_SIZE; render(); }
+
+/* ===== لوحة/شيت الأقسام القابلة للبحث ===== */
+function renderCatSheetList(){
+  const box=$("#catSheetList"); if(!box) return;
+  const q=(($("#catSearch")||{}).value||"").trim().toLowerCase();
+  const cats = realCats().filter(c=>catCount(c.k)>0 && (!q || c.l.toLowerCase().includes(q) || c.k.toLowerCase().includes(q)));
+  cats.sort((a,b)=>catCount(b.k)-catCount(a.k));
+  const all = (!q || "الكل".includes(q))
+    ? `<button class="cs-item ${cat==="all"?"active":""}" type="button" onclick="setCat('all')"><span class="lbl">كل الأقسام</span><span class="num">${PRODUCTS.length}</span></button>`
+    : "";
+  const items = cats.map(c=>`<button class="cs-item ${c.k===cat?"active":""}" type="button" onclick="setCat('${c.k}')"><span class="lbl">${c.l}</span><span class="num">${catCount(c.k)}</span></button>`).join("");
+  box.innerHTML = (all+items) || `<p class="cs-empty">لا يوجد قسم بهذا الاسم.</p>`;
+  const sub=$("#catSheetSub");
+  if(sub) sub.textContent = `${realCats().filter(c=>catCount(c.k)>0).length} قسمًا · ${PRODUCTS.length} منتجًا`;
+}
+function openCatSheet(){
+  const s=$("#catSheet"); if(!s) return;
+  renderCatSheetList();
+  s.classList.add("open"); s.setAttribute("aria-hidden","false");
+  document.body.style.overflow="hidden";
+  const t=$("#catTrigger"); if(t) t.setAttribute("aria-expanded","true");
+  setTimeout(()=>{ const i=$("#catSearch"); if(i && window.matchMedia("(min-width:701px)").matches) i.focus(); },260);
+}
+function closeCatSheet(){
+  const s=$("#catSheet"); if(!s || !s.classList.contains("open")) return;
+  s.classList.remove("open"); s.setAttribute("aria-hidden","true");
+  document.body.style.overflow="";
+  const i=$("#catSearch"); if(i) i.value="";
+  const t=$("#catTrigger"); if(t) t.setAttribute("aria-expanded","false");
+}
+document.addEventListener("keydown",function(e){ if(e.key==="Escape") closeCatSheet(); });
+window.openCatSheet=openCatSheet; window.closeCatSheet=closeCatSheet;
+window.renderCatSheetList=renderCatSheetList; window.showMore=showMore; window.onSearchInput=onSearchInput;
 
 /* بعد أول عرض: أي إعادة رسم (إضافة/حذف من الاختيارات) تظهر فورًا دون إعادة أنيميشن الظهور */
 function showInstantly(container){
@@ -1197,10 +1389,9 @@ function showInstantly(container){
     el.style.transitionDelay="0s";
   });
 }
-function render(){
-  const q=($("#q").value||"").trim().toLowerCase();
-  const list=PRODUCTS.filter(p=>(cat==="all"||p.cat===cat)&&(!q||p.name.toLowerCase().includes(q)||p.en.toLowerCase().includes(q)));
-  $("#products").innerHTML = list.length ? list.map(p=>{const selected=cart.some(c=>c.id===p.id);return `
+function cardHTML(p){
+  const selected=cart.some(c=>c.id===p.id);
+  return `
     <article class="card">
       <div class="scene reveal">
         <div class="tilt">
@@ -1221,7 +1412,47 @@ function render(){
           </button>
         </div>
       </div>
-    </article>`;}).join("") : `<p class="empty">لا توجد نتائج مطابقة.</p>`;
+    </article>`;
+}
+
+/* العرض:
+   - بحث نشط  → نتائج مسطّحة من كل الأقسام.
+   - قسم محدّد → شبكة القسم مع "عرض المزيد" على دفعات.
+   - "الكل"    → مجموعات مصغّرة لكل قسم (٦ منتجات + زر عرض القسم) لتفادي قائمة طويلة. */
+function render(){
+  const q=searchQuery();
+  const host=$("#products");
+
+  if(q){
+    const list=PRODUCTS.filter(p=>(cat==="all"||p.cat===cat)&&matchesQuery(p,q));
+    host.innerHTML = list.length
+      ? `<div class="grid">${list.slice(0,shownCount).map(cardHTML).join("")}</div>
+         ${list.length>shownCount?`<div class="load-more"><button type="button" onclick="showMore()">عرض المزيد (${list.length-shownCount})</button></div>`:""}`
+      : `<p class="empty">لا توجد نتائج مطابقة.</p>`;
+  } else if(cat!=="all"){
+    const list=PRODUCTS.filter(p=>p.cat===cat);
+    host.innerHTML = list.length
+      ? `<div class="grid">${list.slice(0,shownCount).map(cardHTML).join("")}</div>
+         ${list.length>shownCount?`<div class="load-more"><button type="button" onclick="showMore()">عرض المزيد (${list.length-shownCount})</button></div>`:""}`
+      : `<p class="empty">لا توجد منتجات في هذا القسم بعد.</p>`;
+  } else {
+    const groups = realCats()
+      .map(c=>({c, items:PRODUCTS.filter(p=>p.cat===c.k)}))
+      .filter(g=>g.items.length);
+    const orphans = PRODUCTS.filter(p=>!CATS.some(c=>c.k===p.cat));
+    if(orphans.length) groups.push({c:{k:"__other",l:"منتجات أخرى"}, items:orphans});
+    host.innerHTML = groups.length ? `<div class="catalog-groups">${groups.map(g=>{
+      const rest=g.items.length-GROUP_PREVIEW;
+      return `<section class="catgroup">
+        <header class="cg-head">
+          <div class="cg-title"><h3>${g.c.l}</h3><span class="cg-count">${g.items.length}</span></div>
+          ${g.c.k!=="__other" ? `<button class="cg-more" type="button" onclick="setCat('${g.c.k}')">${rest>0?`عرض القسم كاملًا (+${rest})`:"عرض القسم"} ←</button>` : ""}
+        </header>
+        <div class="grid">${g.items.slice(0,GROUP_PREVIEW).map(cardHTML).join("")}</div>
+      </section>`;
+    }).join("")}</div>` : `<p class="empty">لا توجد منتجات لعرضها.</p>`;
+  }
+
   if(window.__firstRenderDone) showInstantly($("#products"));
   init3D();
 }
