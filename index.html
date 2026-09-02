@@ -827,11 +827,40 @@ body.scrolled .brand img{transform:scale(.92)}
   try{ if("scrollRestoration" in history) history.scrollRestoration="manual"; }catch(e){}
   if(location.hash){ try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){} }
   document.documentElement.classList.add("introing");
-  var top=function(){ window.scrollTo(0,0); };
+
+  var top=function(){
+    try{ window.scrollTo({top:0,left:0,behavior:"instant"}); }catch(e){ window.scrollTo(0,0); }
+    if(document.documentElement) document.documentElement.scrollTop=0;
+    if(document.body) document.body.scrollTop=0;
+  };
   top();
-  document.addEventListener("DOMContentLoaded",top);
-  window.addEventListener("load",top);
   window.__scrollTop=top;
+
+  /* المستخدم لم يتفاعل بعد => نُبقي الصفحة في أعلاها بقوة (حل جذري لمشكلة متصفحات الموبايل
+     التي تستعيد موضع التمرير بعد اكتمال التحميل أو بعد تغيّر ارتفاع الصفحة/الصور) */
+  var locked=true;
+  var unlock=function(){ locked=false; };
+  ["touchstart","touchmove","wheel","keydown","pointerdown","mousedown"].forEach(function(ev){
+    window.addEventListener(ev, unlock, {passive:true, once:true});
+  });
+  var guard=function(){ if(locked) top(); };
+  window.addEventListener("scroll", guard, {passive:true});
+  var raf=function(){ if(!locked) return; top(); requestAnimationFrame(raf); };
+  requestAnimationFrame(raf);
+
+  document.addEventListener("DOMContentLoaded", guard);
+  window.addEventListener("load", function(){
+    guard();
+    /* بعض متصفحات الموبايل تستعيد التمرير بعد load بلحظات */
+    [0,60,150,300,600,1000,1600].forEach(function(d){ setTimeout(guard,d); });
+    /* فكّ القفل تلقائيًا بعد استقرار الصفحة إن لم يتفاعل المستخدم */
+    setTimeout(unlock, 2500);
+  });
+  /* منع استعادة الموضع عند إعادة التحميل أو الرجوع من الكاش (bfcache) */
+  window.addEventListener("pagehide", top);
+  window.addEventListener("beforeunload", top);
+  window.addEventListener("pageshow", function(e){ if(e.persisted){ locked=true; top(); requestAnimationFrame(raf); setTimeout(unlock,1500);} });
+  window.__unlockScroll=unlock;
 })();
 </script>
 <div id="intro" role="status" aria-live="polite">
@@ -1190,7 +1219,8 @@ const CATS = [
 const COUPONS = {KHUTWA10:{type:"percent",v:10},GLOW5:{type:"fixed",v:5},SHIP0:{type:"ship",v:0}};
 const SHIPPING = 2.50;
 
-let cat="all", cart=[], coupon=null, box={};
+/* القسم الافتراضي عند فتح الموقع: المستحضرات التجميلية (وليس "الكل") لتسريع أول تحميل */
+let cat="makeup", userPickedCat=false, cart=[], coupon=null, box={};
 const money = n => n.toFixed(2)+" "+CURRENCY;
 const $ = s => document.querySelector(s);
 
@@ -1329,6 +1359,14 @@ const PAGE_SIZE = 12;        /* حجم دفعة "عرض المزيد" داخل �
 let shownCount = PAGE_SIZE;
 
 function realCats(){ return CATS.filter(c=>c.k!=="all"); }
+/* اختيار القسم الافتراضي: "المستحضرات التجميلية" إن وُجد، وإلا المكياج، وإلا أول قسم فيه منتجات */
+function defaultCat(){
+  const byName = realCats().find(c=>/تجميل|cosmet/i.test(c.l||""));
+  if(byName && catCount(byName.k)>0) return byName.k;
+  if(CATS.some(c=>c.k==="makeup") && catCount("makeup")>0) return "makeup";
+  const first = realCats().find(c=>catCount(c.k)>0);
+  return first ? first.k : "all";
+}
 function catLabel(k){ const c=CATS.find(x=>x.k===k); return c?c.l:k; }
 function catCount(k){ return k==="all" ? PRODUCTS.length : PRODUCTS.filter(p=>p.cat===k).length; }
 function searchQuery(){ const el=$("#q"); return ((el&&el.value)||"").trim().toLowerCase(); }
@@ -1368,7 +1406,7 @@ function renderFilters(){
 }
 
 function setCat(k){
-  cat=k; shownCount=PAGE_SIZE;
+  cat=k; userPickedCat=true; shownCount=PAGE_SIZE;
   renderFilters(); render(); closeCatSheet();
   const sec=document.getElementById("shop");
   if(sec) sec.scrollIntoView({behavior:"smooth",block:"start"});
@@ -1844,9 +1882,11 @@ function focusSearch(){
 async function boot(){
   if(!document.getElementById("products")){ requestAnimationFrame(boot); return; }
   document.getElementById("yr").textContent=new Date().getFullYear();
+  if(!userPickedCat) cat=defaultCat();
   renderFilters();render();renderQuotes();updateCart();
   // مزامنة الأقسام والمنتجات مع لوحة الإدارة (لا تؤخّر أول عرض؛ تُعيد الرسم فقط عند نجاحها)
   await loadCatalogFromAdmin();
+  if(!userPickedCat) cat=defaultCat();
   renderFilters();render();
   window.__firstRenderDone=true;
   if(window.__introDone) window.__introDone();
